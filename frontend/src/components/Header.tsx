@@ -23,13 +23,37 @@ const Header: React.FC = () => {
     navigate('/login');
   };
 
-  const userMenu = (
-    <Menu>
-      <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={handleLogout}>
-        退出登录
-      </Menu.Item>
-    </Menu>
-  );
+  const userMenuItems = [
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: '退出登录',
+      onClick: handleLogout
+    }
+  ];
+
+  const menuItems = [
+    {
+      key: '/',
+      icon: <DashboardOutlined />,
+      label: <Link to="/">仪表盘</Link>
+    },
+    {
+      key: '/projects',
+      icon: <ProjectOutlined />,
+      label: <Link to="/projects">项目列表</Link>
+    },
+    {
+      key: '/requirements',
+      icon: <AppstoreOutlined />,
+      label: <Link to="/requirements">需求池</Link>
+    },
+    ...(isAdmin() ? [{
+      key: '/users',
+      icon: <TeamOutlined />,
+      label: <Link to="/users">用户管理</Link>
+    }] : [])
+  ];
 
   return (
     <AntHeader style={{ 
@@ -46,25 +70,11 @@ const Header: React.FC = () => {
           mode="horizontal" 
           selectedKeys={[location.pathname]}
           style={{ border: 'none' }}
-        >
-          <Menu.Item key="/" icon={<DashboardOutlined />}>
-            <Link to="/">仪表盘</Link>
-          </Menu.Item>
-          <Menu.Item key="/projects" icon={<ProjectOutlined />}>
-            <Link to="/projects">项目列表</Link>
-          </Menu.Item>
-          <Menu.Item key="/requirements" icon={<AppstoreOutlined />}>
-            <Link to="/requirements">需求池</Link>
-          </Menu.Item>
-          {isAdmin() && (
-            <Menu.Item key="/users" icon={<TeamOutlined />}>
-              <Link to="/users">用户管理</Link>
-            </Menu.Item>
-          )}
-        </Menu>
+          items={menuItems}
+        />
       </div>
       <div>
-        <Dropdown overlay={userMenu} placement="bottomRight">
+        <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
           <Space style={{ cursor: 'pointer' }}>
             <UserOutlined />
             <span>{user?.name || user?.email}</span>

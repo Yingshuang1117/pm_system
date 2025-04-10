@@ -13,7 +13,6 @@ import {
 import { Link } from 'react-router-dom';
 
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -151,6 +150,33 @@ const Dashboard: React.FC = () => {
     return <div>Loading...</div>;
   }
 
+  const tabItems = [
+    {
+      key: 'projects',
+      label: '项目列表',
+      children: (
+        <Table
+          columns={projectColumns}
+          dataSource={projects}
+          rowKey="id"
+          pagination={{ pageSize: 5 }}
+        />
+      ),
+    },
+    {
+      key: 'requirements',
+      label: '需求池',
+      children: (
+        <Table
+          columns={requirementColumns}
+          dataSource={requirements}
+          rowKey="id"
+          pagination={{ pageSize: 5 }}
+        />
+      ),
+    },
+  ];
+
   return (
     <div className="dashboard">
       <Title level={2}>仪表盘</Title>
@@ -191,24 +217,7 @@ const Dashboard: React.FC = () => {
       </Row>
 
       <div style={{ marginTop: 24 }}>
-        <Tabs defaultActiveKey="projects">
-          <TabPane tab="项目列表" key="projects">
-            <Table
-              columns={projectColumns}
-              dataSource={projects}
-              rowKey="id"
-              pagination={{ pageSize: 5 }}
-            />
-          </TabPane>
-          <TabPane tab="需求池" key="requirements">
-            <Table
-              columns={requirementColumns}
-              dataSource={requirements}
-              rowKey="id"
-              pagination={{ pageSize: 5 }}
-            />
-          </TabPane>
-        </Tabs>
+        <Tabs defaultActiveKey="projects" items={tabItems} />
       </div>
 
       <Row gutter={16} style={{ marginTop: 24 }}>

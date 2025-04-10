@@ -10,12 +10,20 @@ import UserManagement from './components/UserManagement';
 import MainLayout from './components/Layout';
 import { useAuth } from './context/AuthContext';
 
+// 添加 future flags
+const router = {
+  future: {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true
+  }
+};
+
 const App: React.FC = () => {
   const { isAuthenticated, isAdmin } = useAuth();
 
   return (
     <ConfigProvider locale={zhCN}>
-      <Router>
+      <Router {...router}>
         <Routes>
           <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/" />} />
           <Route
