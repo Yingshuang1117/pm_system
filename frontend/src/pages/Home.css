@@ -1,0 +1,157 @@
+.home-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.navbar {
+  background-color: #fff;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logout-button {
+  padding: 0.5rem 1rem;
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+  background-color: #ff7875;
+}
+
+.main-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  margin: 0;
+  color: #333;
+}
+
+.add-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-button:hover {
+  background-color: #357abd;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.product-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.product-card h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.description {
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.price {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #4a90e2;
+  margin-bottom: 0.5rem;
+}
+
+.category {
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.card-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.edit-button,
+.view-button {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.edit-button {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.edit-button:hover {
+  background-color: #357abd;
+}
+
+.view-button {
+  background-color: #52c41a;
+  color: white;
+}
+
+.view-button:hover {
+  background-color: #389e0d;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 1.25rem;
+  color: #666;
+}
+
+.error-message {
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: #ff4d4f;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+} 
