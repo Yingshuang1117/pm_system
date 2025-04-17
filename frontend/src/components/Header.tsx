@@ -22,13 +22,9 @@ const Header: React.FC = () => {
   const [isAdminPanel, setIsAdminPanel] = useState(false);
 
   useEffect(() => {
-    console.log('Current user:', user);
-    console.log('User role:', user?.role);
-    console.log('Is admin?', user?.role === UserRole.ADMIN);
-    console.log('UserRole.ADMIN:', UserRole.ADMIN);
     // 检查当前路径是否在后台
     setIsAdminPanel(location.pathname.startsWith('/admin'));
-  }, [user, location.pathname]);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -43,8 +39,10 @@ const Header: React.FC = () => {
     }
   };
 
+  const isAdminUser = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
+
   const userMenuItems = [
-    ...(user?.role === UserRole.SUPER_ADMIN ? [{
+    ...(isAdminUser ? [{
       key: 'switchPanel',
       icon: <SettingOutlined />,
       label: isAdminPanel ? '切换到前台' : '切换到后台',
@@ -85,6 +83,12 @@ const Header: React.FC = () => {
       icon: <TeamOutlined />,
       label: '用户管理',
       onClick: () => navigate('/admin/users')
+    },
+    {
+      key: '/admin/service-units',
+      icon: <AppstoreOutlined />,
+      label: '服务单元管理',
+      onClick: () => navigate('/admin/service-units')
     }
   ];
 

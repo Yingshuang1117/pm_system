@@ -105,11 +105,13 @@ export interface Activity {
 export interface User {
   id: number;
   username: string;
+  name: string;
+  phone?: string;
   email: string;
   role: UserRole;
   department: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface UserFormData {

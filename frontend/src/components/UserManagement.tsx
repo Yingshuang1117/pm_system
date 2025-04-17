@@ -10,9 +10,12 @@ import {
   message,
   Typography,
   Space,
-  Popconfirm
+  Popconfirm,
+  Upload
 } from 'antd';
+import { UploadOutlined, DownloadOutlined } from '@ant-design/icons';
 import type { FormInstance } from 'antd/es/form';
+import type { UploadProps } from 'antd';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { User, UserRole } from '../types/index';
@@ -31,6 +34,7 @@ const UserManagement: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [form] = Form.useForm();
   const [resetPasswordForm] = Form.useForm();
+  const [uploading, setUploading] = useState(false);
 
   const roleOptions = [
     { label: '超级管理员', value: UserRole.SUPER_ADMIN },
@@ -66,7 +70,7 @@ const UserManagement: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/users');
+      const response = await api.get('/api/users');
       setUsers(Array.isArray(response.data) ? response.data : response.data.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -80,6 +84,8 @@ const UserManagement: React.FC = () => {
     setEditingUser(user);
     form.setFieldsValue({
       username: user.username,
+      name: user.name,
+      phone: user.phone,
       email: user.email,
       department: user.department,
       role: user.role
@@ -89,7 +95,7 @@ const UserManagement: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await api.delete(`/users/${id}`);
+      await api.delete(`/api/users/${id}`);
       message.success('用户删除成功');
       fetchUsers();
     } catch (error) {
@@ -101,18 +107,21 @@ const UserManagement: React.FC = () => {
   const handleSubmit = async (values: any) => {
     try {
       if (editingUser) {
-        await api.put(`/users/${editingUser.id}`, values);
+        await api.put(`/api/users/${editingUser.id}`, values);
         message.success('用户更新成功');
       } else {
-        await api.post('/users', values);
+        console.log('Creating user with values:', values);
+        const response = await api.post('/api/users', values);
+        console.log('Create user response:', response);
         message.success('用户创建成功');
       }
       form.resetFields();
       setEditingUser(null);
       setIsModalVisible(false);
       fetchUsers();
-    } catch (error) {
-      message.error('操作失败');
+    } catch (error: any) {
+      console.error('Operation error:', error);
+      message.error(error.response?.data?.message || '操作失败');
     }
   };
 
@@ -120,7 +129,7 @@ const UserManagement: React.FC = () => {
     if (!selectedUserId) return;
     
     try {
-      await api.post(`/users/${selectedUserId}/reset-password`, {
+      await api.post(`/api/users/${selectedUserId}/reset-password`, {
         password: values.password
       });
       message.success('密码重置成功');
@@ -133,16 +142,94 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const columns: ColumnsType<User> = [
-    {
-      title: '邮箱',
-      dataIndex: 'email',
-      key: 'email',
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await api.get('/api/users/template', {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = '用户导入模板.xlsx';
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download template error:', error);
+      message.error('下载模板失败');
+    }
+  };
+
+  const uploadProps: UploadProps = {
+    name: 'file',
+    action: `${api.defaults.baseURL}/api/users/import`,
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`
     },
+    accept: '.xlsx,.xls',
+    showUploadList: false,
+    beforeUpload: (file) => {
+      const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+                      file.type === 'application/vnd.ms-excel';
+      if (!isExcel) {
+        message.error('只能上传 Excel 文件！');
+        return Upload.LIST_IGNORE;
+      }
+      const isLt5M = file.size / 1024 / 1024 < 5;
+      if (!isLt5M) {
+        message.error('文件大小不能超过 5MB！');
+        return Upload.LIST_IGNORE;
+      }
+      return true;
+    },
+    onChange: (info) => {
+      if (info.file.status === 'uploading') {
+        setUploading(true);
+        return;
+      }
+      if (info.file.status === 'done') {
+        setUploading(false);
+        if (info.file.response.success) {
+          message.success(info.file.response.message);
+          fetchUsers();
+        } else {
+          message.error(info.file.response.message || '导入失败');
+        }
+      } else if (info.file.status === 'error') {
+        setUploading(false);
+        message.error(info.file?.response?.message || '文件上传失败，请重试');
+      }
+    }
+  };
+
+  const columns: ColumnsType<User> = [
     {
       title: '用户名',
       dataIndex: 'username',
       key: 'username',
+    },
+    {
+      title: '姓名',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: '手机号',
+      dataIndex: 'phone',
+      key: 'phone',
+    },
+    {
+      title: '邮箱',
+      dataIndex: 'email',
+      key: 'email',
     },
     {
       title: '部门',
@@ -157,9 +244,25 @@ const UserManagement: React.FC = () => {
     },
     {
       title: '创建时间',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (date: string) => new Date(date).toLocaleString()
+      dataIndex: 'created_at',
+      key: 'created_at',
+      render: (date: string) => {
+        if (!date) return '-';
+        try {
+          return new Date(date).toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          });
+        } catch (error) {
+          console.error('Error formatting date:', error);
+          return '-';
+        }
+      }
     },
     {
       title: '操作',
@@ -190,13 +293,32 @@ const UserManagement: React.FC = () => {
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={2}>用户管理</Title>
-        <Button type="primary" onClick={() => {
-          setEditingUser(null);
-          form.resetFields();
-          setIsModalVisible(true);
-        }}>
-          添加用户
-        </Button>
+        <Space>
+          <Button 
+            icon={<DownloadOutlined />}
+            onClick={handleDownloadTemplate}
+          >
+            下载导入模板
+          </Button>
+          <Upload {...uploadProps}>
+            <Button 
+              icon={<UploadOutlined />}
+              loading={uploading}
+            >
+              导入用户
+            </Button>
+          </Upload>
+          <Button 
+            type="primary" 
+            onClick={() => {
+              setEditingUser(null);
+              form.resetFields();
+              setIsModalVisible(true);
+            }}
+          >
+            添加用户
+          </Button>
+        </Space>
       </div>
 
       <Table
@@ -225,6 +347,22 @@ const UserManagement: React.FC = () => {
             name="username"
             label="用户名"
             rules={[{ required: true, message: '请输入用户名' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="name"
+            label="姓名"
+            rules={[{ required: true, message: '请输入姓名' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="phone"
+            label="手机号"
+            rules={[
+              { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号' }
+            ]}
           >
             <Input />
           </Form.Item>

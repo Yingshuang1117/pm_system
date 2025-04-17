@@ -1,5 +1,9 @@
 const pool = require('../config/database');
 
+async function getConnection() {
+  return await pool.getConnection();
+}
+
 async function query(sql, params) {
   const [rows] = await pool.execute(sql, params);
   return rows;
@@ -39,10 +43,32 @@ async function remove(table, where) {
   return result;
 }
 
+// 事务相关方法
+async function beginTransaction(connection) {
+  await connection.beginTransaction();
+}
+
+async function commit(connection) {
+  await connection.commit();
+}
+
+async function rollback(connection) {
+  await connection.rollback();
+}
+
+async function releaseConnection(connection) {
+  connection.release();
+}
+
 module.exports = {
   query,
   findOne,
   insert,
   update,
-  remove
+  remove,
+  getConnection,
+  beginTransaction,
+  commit,
+  rollback,
+  releaseConnection
 }; 

@@ -1,97 +1,56 @@
 import React from 'react';
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
-import { ConfigProvider } from 'antd';
-import zhCN from 'antd/locale/zh_CN';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Layout } from 'antd';
 import Login from './components/Login';
-import MainLayout from './components/Layout';
 import Dashboard from './components/Dashboard';
-import ProjectList from './components/ProjectList';
 import RequirementList from './components/RequirementList';
+import ProjectList from './components/ProjectList';
 import UserManagement from './components/UserManagement';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { UserRole } from './types';
+import ServiceUnitManagement from './components/ServiceUnitManagement';
+import Header from './components/Header';
+import { useAuth } from './context/AuthContext';
+import PrivateRoute from './components/PrivateRoute';
+import Register from './components/Register';
 
-// 私有路由守卫组件
-const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const { Content } = Layout;
+
+function App() {
   const { user } = useAuth();
-  
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
 
-  return <>{children}</>;
-};
-
-// 后台路由守卫组件
-const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
-  
-  if (!user || user.role !== UserRole.SUPER_ADMIN) {
-    return <Navigate to="/" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Navigate to="/login" replace />
-  },
-  {
-    path: '/login',
-    element: <Login />
-  },
-  {
-    path: '/dashboard',
-    element: (
-      <PrivateRoute>
-        <MainLayout />
-      </PrivateRoute>
-    ),
-    children: [
-      {
-        index: true,
-        element: <Dashboard />
-      },
-      {
-        path: 'projects',
-        element: <ProjectList />
-      },
-      {
-        path: 'requirements',
-        element: <RequirementList />
-      }
-    ]
-  },
-  {
-    path: '/admin',
-    element: (
-      <PrivateRoute>
-        <MainLayout />
-      </PrivateRoute>
-    ),
-    children: [
-      {
-        path: 'users',
-        element: (
-          <AdminRoute>
-            <UserManagement />
-          </AdminRoute>
-        )
-      }
-    ]
-  }
-]);
-
-const App: React.FC = () => {
   return (
-    <ConfigProvider locale={zhCN}>
-      <AuthProvider>
-        <RouterProvider router={router} />
-      </AuthProvider>
-    </ConfigProvider>
+    <Router>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* Protected routes */}
+        <Route
+          path="/*"
+          element={
+            <PrivateRoute>
+              <Layout style={{ minHeight: '100vh' }}>
+                <Header />
+                <Content style={{ padding: '24px' }}>
+                  <Routes>
+                    {/* 前台路由 */}
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dashboard/projects" element={<ProjectList />} />
+                    <Route path="/dashboard/requirements" element={<RequirementList />} />
+                    
+                    {/* 后台路由 */}
+                    <Route path="/admin/users" element={<UserManagement />} />
+                    <Route path="/admin/service-units" element={<ServiceUnitManagement />} />
+                  </Routes>
+                </Content>
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+      </Routes>
+    </Router>
   );
-};
+}
 
 export default App; 

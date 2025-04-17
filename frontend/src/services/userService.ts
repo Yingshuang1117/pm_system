@@ -1,40 +1,38 @@
-import axios from 'axios';
+import { api } from './api';
 import { User, UserFormValues } from '../types';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 export const userService = {
   // Get all users
   getUsers: async (): Promise<User[]> => {
-    const response = await axios.get(`${API_URL}/users`);
+    const response = await api.get('/api/users');
     return response.data;
   },
 
   // Get user by ID
   getUserById: async (id: number): Promise<User> => {
-    const response = await axios.get(`${API_URL}/users/${id}`);
+    const response = await api.get(`/api/users/${id}`);
     return response.data;
   },
 
   // Create new user
   createUser: async (userData: UserFormValues): Promise<User> => {
-    const response = await axios.post(`${API_URL}/users`, userData);
+    const response = await api.post('/api/users', userData);
     return response.data;
   },
 
   // Update user
   updateUser: async (id: number, userData: Partial<UserFormValues>): Promise<User> => {
-    const response = await axios.put(`${API_URL}/users/${id}`, userData);
+    const response = await api.put(`/api/users/${id}`, userData);
     return response.data;
   },
 
   // Delete user
   deleteUser: async (id: number): Promise<void> => {
-    await axios.delete(`${API_URL}/users/${id}`);
+    await api.delete(`/api/users/${id}`);
   },
 
   // Reset user password
   resetPassword: async (id: number, newPassword: string): Promise<void> => {
-    await axios.post(`${API_URL}/users/${id}/reset-password`, { newPassword });
+    await api.post(`/api/users/${id}/reset-password`, { newPassword });
   }
 }; 
