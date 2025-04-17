@@ -132,19 +132,26 @@ const ProductList: React.FC = () => {
         rowKey="id"
         loading={loading}
       />
-      <ProductForm
-        visible={isModalVisible}
-        onCancel={() => {
-          setIsModalVisible(false);
-          setEditingProduct(null);
-        }}
-        onSuccess={() => {
-          setIsModalVisible(false);
-          setEditingProduct(null);
-          fetchProducts();
-        }}
-        initialValues={editingProduct}
-      />
+      <Modal
+        title={editingProduct ? "编辑产品" : "新建产品"}
+        open={isModalVisible}
+        onOk={handleModalOk}
+        onCancel={handleModalCancel}
+      >
+        <ProductForm
+          visible={isModalVisible}
+          onCancel={() => {
+            setIsModalVisible(false);
+            setEditingProduct(null);
+          }}
+          onSuccess={() => {
+            setIsModalVisible(false);
+            setEditingProduct(null);
+            fetchProducts();
+          }}
+          initialValues={editingProduct}
+        />
+      </Modal>
     </div>
   );
 };

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login } = useAuth();
@@ -13,7 +13,7 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(email, password);
+      await login(username, password);
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.message || '登录失败');
@@ -23,16 +23,16 @@ const Login: React.FC = () => {
   return (
     <div className="login-container">
       <div className="login-box">
-        <h2>登录</h2>
+        <h2>项目管理系统</h2>
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">邮箱</label>
+            <label htmlFor="username">用户名</label>
             <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
             />
           </div>

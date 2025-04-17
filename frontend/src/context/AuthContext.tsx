@@ -1,21 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
-
-export enum UserRole {
-  PRODUCT_MANAGER = 'product_manager',
-  PRODUCT_DIRECTOR = 'product_director',
-  ADMIN = 'admin'
-}
-
-interface User {
-  id: number;
-  email: string;
-  name: string;
-  role: UserRole;
-  department?: string;
-  createdAt: string;
-  lastLoginAt: string;
-}
+import { UserRole, User } from '../types';
 
 export interface AuthContextType {
   user: User | null;
@@ -25,8 +10,9 @@ export interface AuthContextType {
   logout: () => void;
   updateProfile: (data: Partial<User>) => Promise<void>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
-  isProductDirector: () => boolean;
+  isProductManager: () => boolean;
   isAdmin: () => boolean;
+  hasAdminPermissions: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,37 +20,67 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      // Fetch user data
-      api.get('/api/me')
-        .then(response => {
+    console.log('[AuthContext] Initial token check:', token ? 'Token exists' : 'No token');
+    
+    const initializeAuth = async () => {
+      if (token) {
+        try {
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          const response = await api.get('/api/me');
+          console.log('[AuthContext] User data fetched:', {
+            user: response.data,
+            role: response.data.role,
+            isSuperAdmin: response.data.role === UserRole.SUPER_ADMIN,
+            isAdmin: response.data.role === UserRole.ADMIN,
+            isProductManager: response.data.role === UserRole.PRODUCT_MANAGER
+          });
           setUser(response.data);
           setIsAuthenticated(true);
-        })
-        .catch(() => {
+        } catch (error) {
+          console.error('[AuthContext] Error fetching user data:', error);
           localStorage.removeItem('token');
           delete api.defaults.headers.common['Authorization'];
+          setUser(null);
           setIsAuthenticated(false);
-        });
-    } else {
-      setIsAuthenticated(false);
-    }
+        }
+      } else {
+        console.log('[AuthContext] No token found, setting isAuthenticated to false');
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+      setIsInitializing(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await api.post('/api/login', { email, password });
+      const response = await api.post('/api/login', { username: email, password });
       const { token, user } = response.data;
+      console.log('[AuthContext] Login successful:', { 
+        token: token ? 'Token received' : 'No token', 
+        user,
+        role: user.role,
+        isSuperAdmin: user.role === UserRole.SUPER_ADMIN,
+        isAdmin: user.role === UserRole.ADMIN,
+        isProductManager: user.role === UserRole.PRODUCT_MANAGER
+      });
+
+      if (!token) {
+        throw new Error('No token received from server');
+      }
+
       localStorage.setItem('token', token);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(user);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('[AuthContext] Login error:', error);
       throw error;
     }
   };
@@ -74,6 +90,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
+    console.log('[AuthContext] Logging out user:', { 
+      previousUser: user,
+      previousRole: user?.role 
+    });
     localStorage.removeItem('token');
     delete api.defaults.headers.common['Authorization'];
     setUser(null);
@@ -89,12 +109,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await api.put('/api/password', { oldPassword, newPassword });
   };
 
-  const isProductDirector = () => {
-    return user?.role === UserRole.PRODUCT_DIRECTOR;
+  const isProductManager = () => {
+    console.log('[AuthContext] Checking isProductManager:', { 
+      userRole: user?.role, 
+      isProductManager: user?.role === UserRole.PRODUCT_MANAGER,
+      userExists: !!user 
+    });
+    return user?.role === UserRole.PRODUCT_MANAGER;
   };
 
   const isAdmin = () => {
-    return user?.role === UserRole.ADMIN;
+    console.log('[AuthContext] Checking isAdmin:', { 
+      userRole: user?.role, 
+      isAdmin: user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN,
+      userExists: !!user 
+    });
+
+    return user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
+  };
+
+  const hasAdminPermissions = () => {
+    const isSuperAdmin = user?.role === UserRole.SUPER_ADMIN;
+    const isAdminUser = user?.role === UserRole.ADMIN;
+    const hasPermission = isSuperAdmin || isAdminUser;
+
+    console.log('[AuthContext] Checking hasAdminPermissions:', { 
+      userRole: user?.role, 
+      isSuperAdmin,
+      isAdminUser,
+      hasPermission,
+      userExists: !!user 
+    });
+
+    return hasPermission;
   };
 
   const value: AuthContextType = {
@@ -105,15 +152,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     updateProfile,
     changePassword,
-    isProductDirector,
-    isAdmin
+    isProductManager,
+    isAdmin,
+    hasAdminPermissions
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  if (isInitializing) {
+    return <div>Loading...</div>;
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

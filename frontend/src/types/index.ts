@@ -20,21 +20,24 @@ export enum ProjectStatus {
 }
 
 export enum UserRole {
+  SUPER_ADMIN = 'SUPER_ADMIN',
   ADMIN = 'ADMIN',
-  USER = 'USER'
+  PRODUCT_MANAGER = 'PRODUCT_MANAGER',
+  DEVELOPER = 'DEVELOPER',
+  TESTER = 'TESTER',
+  STAKEHOLDER = 'STAKEHOLDER'
 }
 
 export interface Requirement {
   id: number;
   code: string;
   description: string;
-  requester: string;
+  requestor: string;
   department: string;
   requestDate: string;
-  scheduleStatus: string;
+  status: RequirementStatus;
   projectId: number | null;
   projectStatus: string | null;
-  status: string;
 }
 
 export interface ProjectMember {
@@ -102,11 +105,9 @@ export interface Activity {
 export interface User {
   id: number;
   username: string;
-  fullName: string;
   email: string;
-  department: string;
   role: UserRole;
-  isActive: boolean;
+  department: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -119,4 +120,11 @@ export interface UserFormData {
   role: UserRole;
   isActive: boolean;
   password?: string;
+}
+
+export interface UserFormValues {
+  username: string;
+  email: string;
+  password?: string;
+  role: UserRole;
 } 

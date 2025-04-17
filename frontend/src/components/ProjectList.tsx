@@ -368,7 +368,7 @@ const ProjectList: React.FC = () => {
       />
       <Modal
         title={editingProject ? '编辑项目' : '新建项目'}
-        visible={isModalVisible}
+        open={isModalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
         width={800}
@@ -436,7 +436,7 @@ const ProjectList: React.FC = () => {
       {/* 项目详情模态框 */}
       <Modal
         title="项目详情"
-        visible={detailModalVisible}
+        open={detailModalVisible}
         onCancel={() => setDetailModalVisible(false)}
         footer={null}
         width={800}
@@ -607,7 +607,7 @@ const ProjectList: React.FC = () => {
       {/* 成员管理模态框 */}
       <Modal
         title={selectedMember ? '编辑成员' : '添加成员'}
-        visible={memberModalVisible}
+        open={memberModalVisible}
         onOk={handleMemberModalOk}
         onCancel={() => setMemberModalVisible(false)}
       >
@@ -639,7 +639,7 @@ const ProjectList: React.FC = () => {
       {/* 文档管理模态框 */}
       <Modal
         title={selectedDocument ? '编辑文档' : '添加文档'}
-        visible={documentModalVisible}
+        open={documentModalVisible}
         onOk={handleDocumentModalOk}
         onCancel={() => setDocumentModalVisible(false)}
       >

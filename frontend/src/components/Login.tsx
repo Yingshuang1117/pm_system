@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 interface LoginForm {
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -16,9 +16,9 @@ const Login: React.FC = () => {
 
   const onFinish = async (values: LoginForm) => {
     try {
-      await login(values.email, values.password);
+      await login(values.username, values.password);
       message.success('登录成功');
-      navigate('/');
+      navigate('/dashboard');
     } catch (error) {
       message.error('登录失败：' + (error instanceof Error ? error.message : '未知错误'));
     }
@@ -41,15 +41,14 @@ const Login: React.FC = () => {
           autoComplete="off"
         >
           <Form.Item
-            name="email"
+            name="username"
             rules={[
-              { required: true, message: '请输入邮箱' },
-              { type: 'email', message: '请输入有效的邮箱地址' }
+              { required: true, message: '请输入用户名' }
             ]}
           >
             <Input 
               prefix={<UserOutlined />} 
-              placeholder="邮箱" 
+              placeholder="用户名" 
               size="large"
             />
           </Form.Item>

@@ -1,83 +1,95 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
-import zhCN from 'antd/lib/locale/zh_CN';
-import Login from './pages/Login';
-import ProjectList from './components/ProjectList';
-import RequirementPool from './components/RequirementPool';
-import Dashboard from './components/Dashboard';
-import UserManagement from './components/UserManagement';
+import zhCN from 'antd/locale/zh_CN';
+import Login from './components/Login';
 import MainLayout from './components/Layout';
-import { useAuth } from './context/AuthContext';
+import Dashboard from './components/Dashboard';
+import ProjectList from './components/ProjectList';
+import RequirementList from './components/RequirementList';
+import UserManagement from './components/UserManagement';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { UserRole } from './types';
 
-// 添加 future flags
-const router = {
-  future: {
-    v7_startTransition: true,
-    v7_relativeSplatPath: true
+// 私有路由守卫组件
+const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
   }
+
+  return <>{children}</>;
 };
 
-const App: React.FC = () => {
-  const { isAuthenticated, isAdmin } = useAuth();
+// 后台路由守卫组件
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  
+  if (!user || user.role !== UserRole.SUPER_ADMIN) {
+    return <Navigate to="/" replace />;
+  }
 
+  return <>{children}</>;
+};
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Navigate to="/login" replace />
+  },
+  {
+    path: '/login',
+    element: <Login />
+  },
+  {
+    path: '/dashboard',
+    element: (
+      <PrivateRoute>
+        <MainLayout />
+      </PrivateRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <Dashboard />
+      },
+      {
+        path: 'projects',
+        element: <ProjectList />
+      },
+      {
+        path: 'requirements',
+        element: <RequirementList />
+      }
+    ]
+  },
+  {
+    path: '/admin',
+    element: (
+      <PrivateRoute>
+        <MainLayout />
+      </PrivateRoute>
+    ),
+    children: [
+      {
+        path: 'users',
+        element: (
+          <AdminRoute>
+            <UserManagement />
+          </AdminRoute>
+        )
+      }
+    ]
+  }
+]);
+
+const App: React.FC = () => {
   return (
     <ConfigProvider locale={zhCN}>
-      <Router {...router}>
-        <Routes>
-          <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/" />} />
-          <Route
-            path="/"
-            element={
-              isAuthenticated ? (
-                <MainLayout>
-                  <Dashboard />
-                </MainLayout>
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/projects"
-            element={
-              isAuthenticated ? (
-                <MainLayout>
-                  <ProjectList />
-                </MainLayout>
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/requirements"
-            element={
-              isAuthenticated ? (
-                <MainLayout>
-                  <RequirementPool />
-                </MainLayout>
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          {isAdmin() && (
-            <Route
-              path="/users"
-              element={
-                isAuthenticated ? (
-                  <MainLayout>
-                    <UserManagement />
-                  </MainLayout>
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            />
-          )}
-        </Routes>
-      </Router>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </ConfigProvider>
   );
 };

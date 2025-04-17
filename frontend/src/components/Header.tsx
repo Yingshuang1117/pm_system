@@ -1,29 +1,55 @@
-import React from 'react';
-import { Layout, Menu, Button, Dropdown, Space } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Layout, Menu, Dropdown, Space } from 'antd';
 import { 
   UserOutlined, 
   LogoutOutlined, 
   DashboardOutlined,
   ProjectOutlined,
   AppstoreOutlined,
-  TeamOutlined
+  TeamOutlined,
+  SettingOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { UserRole } from '../types';
 
 const { Header: AntHeader } = Layout;
 
 const Header: React.FC = () => {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isAdminPanel, setIsAdminPanel] = useState(false);
+
+  useEffect(() => {
+    console.log('Current user:', user);
+    console.log('User role:', user?.role);
+    console.log('Is admin?', user?.role === UserRole.ADMIN);
+    console.log('UserRole.ADMIN:', UserRole.ADMIN);
+    // 检查当前路径是否在后台
+    setIsAdminPanel(location.pathname.startsWith('/admin'));
+  }, [user, location.pathname]);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const handleSwitchPanel = () => {
+    if (isAdminPanel) {
+      navigate('/dashboard');
+    } else {
+      navigate('/admin/users');
+    }
+  };
+
   const userMenuItems = [
+    ...(user?.role === UserRole.SUPER_ADMIN ? [{
+      key: 'switchPanel',
+      icon: <SettingOutlined />,
+      label: isAdminPanel ? '切换到前台' : '切换到后台',
+      onClick: handleSwitchPanel
+    }] : []),
     {
       key: 'logout',
       icon: <LogoutOutlined />,
@@ -32,28 +58,37 @@ const Header: React.FC = () => {
     }
   ];
 
-  const menuItems = [
+  const baseMenuItems = [
     {
-      key: '/',
+      key: '/dashboard',
       icon: <DashboardOutlined />,
-      label: <Link to="/">仪表盘</Link>
+      label: '仪表盘',
+      onClick: () => navigate('/dashboard')
     },
     {
-      key: '/projects',
+      key: '/dashboard/projects',
       icon: <ProjectOutlined />,
-      label: <Link to="/projects">项目列表</Link>
+      label: '项目列表',
+      onClick: () => navigate('/dashboard/projects')
     },
     {
-      key: '/requirements',
+      key: '/dashboard/requirements',
       icon: <AppstoreOutlined />,
-      label: <Link to="/requirements">需求池</Link>
-    },
-    ...(isAdmin() ? [{
-      key: '/users',
-      icon: <TeamOutlined />,
-      label: <Link to="/users">用户管理</Link>
-    }] : [])
+      label: '需求池',
+      onClick: () => navigate('/dashboard/requirements')
+    }
   ];
+
+  const adminMenuItems = [
+    {
+      key: '/admin/users',
+      icon: <TeamOutlined />,
+      label: '用户管理',
+      onClick: () => navigate('/admin/users')
+    }
+  ];
+
+  const menuItems = isAdminPanel ? adminMenuItems : baseMenuItems;
 
   return (
     <AntHeader style={{ 
@@ -62,22 +97,36 @@ const Header: React.FC = () => {
       alignItems: 'center',
       padding: '0 24px',
       background: '#fff',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+      position: 'sticky',
+      top: 0,
+      zIndex: 1
     }}>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <h1 style={{ margin: 0, marginRight: 48, fontSize: 20 }}>项目管理系统</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>
+          {isAdminPanel ? '后台管理系统' : '项目管理系统'}
+        </h1>
         <Menu 
           mode="horizontal" 
           selectedKeys={[location.pathname]}
-          style={{ border: 'none' }}
+          style={{ 
+            border: 'none',
+            flex: 1,
+            minWidth: 400
+          }}
           items={menuItems}
         />
       </div>
       <div>
         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-          <Space style={{ cursor: 'pointer' }}>
+          <Space style={{ 
+            cursor: 'pointer',
+            padding: '4px 8px',
+            borderRadius: 4,
+            transition: 'background-color 0.3s'
+          }} className="user-dropdown">
             <UserOutlined />
-            <span>{user?.name || user?.email}</span>
+            <span>{user?.username}</span>
           </Space>
         </Dropdown>
       </div>
